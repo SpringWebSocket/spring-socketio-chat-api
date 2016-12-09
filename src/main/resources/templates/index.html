@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Index | Socket IO Spring</title>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<style>
+		*{
+			margin:0;
+			padding: 0;
+		}
+		#chat-box{
+			min-height: 500px;
+			width:300px;
+			background-color:#dadada;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="container-fluid">
+		<button id="root">Connect</button>
+		<button id="notify">Connect To Notification Namespace</button>
+		<button id="like">Like</button>
+		<div id="chat-box">
+			
+		</div>
+		<input type="text" id="message" placeholder="message here..." /><button id="send">Send</button>
+	</div>
+	
+	<input id="file" type="file" />
+	<div id="result"></div>
+	
+	<script src="/static/js/socket.io/socket.io.js"></script>
+    <script src="/static/js/jquery-1.7.2.min.js"></script>
+    <script>
+    	
+    	    
+   		var server = 'http://localhost:3000';
+   		var notificationServer = `${server}/notification`;
+   		
+		var socket = null;
+		var notifySocket = null;
+		
+		$(document).ready(function(){
+			
+			var username = 'user' + Math.floor(Math.random()*100);
+			
+			$('button#root').on('click', function(){
+				socket = io.connect(server);
+				
+				socket.on('connect', function(){
+					console.log('socket connected!');
+				});  
+				
+				socket.on('message', function(data){
+					console.log(data);
+					$('#chat-box').append(`<p>${data.username}: ${data.text}<p>`);
+				});  
+				
+				$('#send').on('click', function(){
+					socket.emit('chat', { "text": $('#message').val(), "username": username});
+				});
+			});
+			
+			
+			$('button#notify').on('click', function(){
+				notifySocket = io.connect(notificationServer);
+				
+				notifySocket.on('connect', function(){
+					console.log('notify connected!');
+				});
+				
+				notifySocket.on('like', function(){
+					console.log('notify connected!');
+				});
+				
+			});
+			
+			$('button#like').on('click', function(){
+				notifySocket.emit('like', 'someone like you!', function(ack, ack1){
+					console.log(arguments);
+					console.log('callback', ack);
+					console.log('callback1', ack1);
+				});
+				socket.emit('like', 'someone like you too!');
+			});
+			
+			
+			$('#file').change(function(){
+				
+					var bufArr = new ArrayBuffer(4);
+		            var bufView = new Uint8Array(bufArr);
+		            bufView[0]=6;
+		            bufView[1]=7;
+		            bufView[2]=8;
+		            bufView[3]=9; 
+	            	socket.emit('byte', bufView);
+			});
+
+		});
+		
+    </script>
+</body>
+</html>
